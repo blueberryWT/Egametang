@@ -3,6 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace Model
 {
+	[BsonKnownTypes(typeof(Component))]
 	public abstract class Disposer : Object, IDisposable
 	{
 		[BsonIgnoreIfDefault]
@@ -10,16 +11,27 @@ namespace Model
 		[BsonElement]
 		[BsonId]
 		public long Id { get; set; }
-		
+
+		[BsonIgnore]
+		public bool IsFromPool { get; set; }
+	
 		protected Disposer()
 		{
-			ObjectEvents.Instance.Add(this);
+			this.Id = IdGenerater.GenerateId();
+		}
+
+		protected Disposer(long id)
+		{
+			this.Id = id;
 		}
 
 		public virtual void Dispose()
 		{
 			this.Id = 0;
-			ObjectPool.Instance.Recycle(this);
+			if (this.IsFromPool)
+			{
+				Game.ObjectPool.Recycle(this);
+			}
 		}
 	}
 }

@@ -11,7 +11,6 @@ namespace Hotfix
 			{
 				Hotfix.Scene.ModelScene = Game.Scene;
 				Hotfix.Scene.AddComponent<UIComponent>();
-				Hotfix.Scene.GetComponent<EventComponent>().Run(EventIdType.InitSceneStart);
 			}
 			catch (Exception e)
 			{
@@ -23,7 +22,7 @@ namespace Hotfix
 		{
 			try
 			{
-				ObjectEvents.Instance.Update();
+				Hotfix.EventSystem.Update();
 			}
 			catch (Exception e)
 			{
@@ -35,7 +34,7 @@ namespace Hotfix
 		{
 			try
 			{
-				ObjectEvents.Instance.LateUpdate();
+				Hotfix.EventSystem.LateUpdate();
 			}
 			catch (Exception e)
 			{
@@ -45,7 +44,6 @@ namespace Hotfix
 
 		public static void OnApplicationQuit()
 		{
-			ObjectEvents.Close();
 			Hotfix.Close();
 		}
 	}

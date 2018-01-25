@@ -12,24 +12,24 @@ namespace Model
 	{
 		private readonly TcpClient tcpClient;
 
-		private readonly TBuffer recvBuffer = new TBuffer();
-		private readonly TBuffer sendBuffer = new TBuffer();
+		private readonly CircularBuffer recvBuffer = new CircularBuffer();
+		private readonly CircularBuffer sendBuffer = new CircularBuffer();
 
 		private bool isSending;
 		private readonly PacketParser parser;
 		private bool isConnected;
-		private TaskCompletionSource<byte[]> recvTcs;
+		private TaskCompletionSource<Packet> recvTcs;
 
 		/// <summary>
 		/// connect
 		/// </summary>
-		public TChannel(TcpClient tcpClient, string host, int port, TService service) : base(service, ChannelType.Connect)
+		public TChannel(TcpClient tcpClient, IPEndPoint ipEndPoint, TService service) : base(service, ChannelType.Connect)
 		{
 			this.tcpClient = tcpClient;
 			this.parser = new PacketParser(this.recvBuffer);
-			this.RemoteAddress = host + ":" + port;
+			this.RemoteAddress = ipEndPoint;
 
-			this.ConnectAsync(host, port);
+			this.ConnectAsync(ipEndPoint);
 		}
 
 		/// <summary>
@@ -41,15 +41,16 @@ namespace Model
 			this.parser = new PacketParser(this.recvBuffer);
 
 			IPEndPoint ipEndPoint = (IPEndPoint)this.tcpClient.Client.RemoteEndPoint;
-			this.RemoteAddress = ipEndPoint.Address + ":" + ipEndPoint.Port;
+			this.RemoteAddress = ipEndPoint;
 			this.OnAccepted();
 		}
 
-		private async void ConnectAsync(string host, int port)
+		private async void ConnectAsync(IPEndPoint ipEndPoint)
 		{
 			try
 			{
-				await this.tcpClient.ConnectAsync(host, port);
+				await this.tcpClient.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port);
+				
 				this.isConnected = true;
 				this.StartSend();
 				this.StartRecv();
@@ -57,10 +58,12 @@ namespace Model
 			catch (SocketException e)
 			{
 				Log.Error($"connect error: {e.SocketErrorCode}");
+				this.OnError(this, e.SocketErrorCode);
 			}
 			catch (Exception e)
 			{
-				Log.Error($"connect error: {host} {port} {e}");
+				this.OnError(this, SocketError.SocketError);
+				Log.Error($"connect error: {ipEndPoint} {e}");
 			}
 		}
 
@@ -83,7 +86,7 @@ namespace Model
 			this.StartRecv();
 		}
 
-		public override void Send(byte[] buffer, byte channelID = 0, PacketFlags flags = PacketFlags.Reliable)
+		public override void Send(byte[] buffer)
 		{
 			if (this.Id == 0)
 			{
@@ -94,11 +97,11 @@ namespace Model
 			this.sendBuffer.SendTo(buffer);
 			if (this.isConnected)
 			{
-				((TService)this.service).Add(this.StartSend);
+				this.StartSend();
 			}
 		}
 
-		public override void Send(List<byte[]> buffers, byte channelID = 0, PacketFlags flags = PacketFlags.Reliable)
+		public override void Send(List<byte[]> buffers)
 		{
 			if (this.Id == 0)
 			{
@@ -113,7 +116,7 @@ namespace Model
 			}
 			if (this.isConnected)
 			{
-				((TService)this.service).Add(this.StartSend);
+				this.StartSend();
 			}
 		}
 
@@ -148,14 +151,14 @@ namespace Model
 
 					this.isSending = true;
 
-					int sendSize = TBuffer.ChunkSize - this.sendBuffer.FirstIndex;
+					int sendSize = sendBuffer.ChunkSize - this.sendBuffer.FirstIndex;
 					if (sendSize > this.sendBuffer.Count)
 					{
 						sendSize = this.sendBuffer.Count;
 					}
 					await this.tcpClient.GetStream().WriteAsync(this.sendBuffer.First, this.sendBuffer.FirstIndex, sendSize);
 					this.sendBuffer.FirstIndex += sendSize;
-					if (this.sendBuffer.FirstIndex == TBuffer.ChunkSize)
+					if (this.sendBuffer.FirstIndex == sendBuffer.ChunkSize)
 					{
 						this.sendBuffer.FirstIndex = 0;
 						this.sendBuffer.RemoveFirst();
@@ -179,7 +182,7 @@ namespace Model
 					{
 						return;
 					}
-					int size = TBuffer.ChunkSize - this.recvBuffer.LastIndex;
+					int size = this.recvBuffer.ChunkSize - this.recvBuffer.LastIndex;
 
 					int n = await this.tcpClient.GetStream().ReadAsync(this.recvBuffer.Last, this.recvBuffer.LastIndex, size);
 
@@ -191,7 +194,7 @@ namespace Model
 
 					this.recvBuffer.LastIndex += n;
 
-					if (this.recvBuffer.LastIndex == TBuffer.ChunkSize)
+					if (this.recvBuffer.LastIndex == this.recvBuffer.ChunkSize)
 					{
 						this.recvBuffer.AddLast();
 						this.recvBuffer.LastIndex = 0;
@@ -199,9 +202,11 @@ namespace Model
 
 					if (this.recvTcs != null)
 					{
-						byte[] packet = this.parser.GetPacket();
-						if (packet != null)
+						bool isOK = this.parser.Parse();
+						if (isOK)
 						{
+							Packet packet = this.parser.GetPacket();
+
 							var tcs = this.recvTcs;
 							this.recvTcs = null;
 							tcs.SetResult(packet);
@@ -222,20 +227,21 @@ namespace Model
 			}
 		}
 
-		public override Task<byte[]> Recv()
+		public override Task<Packet> Recv()
 		{
 			if (this.Id == 0)
 			{
 				throw new Exception("TChannel已经被Dispose, 不能接收消息");
 			}
 
-			byte[] packet = this.parser.GetPacket();
-			if (packet != null)
+			bool isOK = this.parser.Parse();
+			if (isOK)
 			{
+				Packet packet = this.parser.GetPacket();
 				return Task.FromResult(packet);
 			}
 
-			recvTcs = new TaskCompletionSource<byte[]>();
+			recvTcs = new TaskCompletionSource<Packet>();
 			return recvTcs.Task;
 		}
 	}

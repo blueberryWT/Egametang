@@ -1,24 +1,62 @@
-﻿namespace Model
+namespace Model
 {
-	// 1000开始
-	public static partial class Opcode
+	public enum Opcode: ushort
 	{
-		public const ushort FrameMessage = 1000;
-		public const ushort C2R_Login = 1001;
-		public const ushort R2C_Login = 1002;
-		public const ushort R2C_ServerLog = 1003;
-		public const ushort C2G_LoginGate = 1004;
-		public const ushort G2C_LoginGate = 1005;
-		public const ushort C2G_EnterMap = 1006;
-		public const ushort G2C_EnterMap = 1007;
-		public const ushort C2M_Reload = 1008;
-
-		public const ushort Actor_Test = 2001;
-		public const ushort Actor_TestRequest = 2002;
-		public const ushort Actor_TestResponse = 2003;
-		public const ushort Actor_TransferRequest = 2004;
-		public const ushort Actor_TransferResponse = 2005;
-		public const ushort Frame_ClickMap = 2006;
-		public const ushort Actor_CreateUnits = 2007;
+		C2R_Login = 101,
+		R2C_Login = 102,
+		C2G_LoginGate = 103,
+		G2C_LoginGate = 104,
+		Actor_Test = 105,
+		Actor_TestRequest = 106,
+		Actor_TestResponse = 107,
+		Actor_TransferRequest = 108,
+		Actor_TransferResponse = 109,
+		C2G_EnterMap = 110,
+		G2C_EnterMap = 111,
+		UnitInfo = 112,
+		Actor_CreateUnits = 113,
+		FrameMessageInfo = 114,
+		FrameMessage = 115,
+		Frame_ClickMap = 116,
+		C2M_Reload = 117,
+		M2C_Reload = 118,
+		C2R_Ping = 119,
+		R2C_Ping = 120,
+		ActorRequest = 1001,
+		ActorResponse = 1002,
+		ActorRpcRequest = 1003,
+		ActorRpcResponse = 1004,
+		M2M_TrasferUnitRequest = 1005,
+		M2M_TrasferUnitResponse = 1006,
+		M2A_Reload = 1007,
+		A2M_Reload = 1008,
+		G2G_LockRequest = 1009,
+		G2G_LockResponse = 1010,
+		G2G_LockReleaseRequest = 1011,
+		G2G_LockReleaseResponse = 1012,
+		DBSaveRequest = 1013,
+		DBSaveBatchResponse = 1014,
+		DBSaveBatchRequest = 1015,
+		DBSaveResponse = 1016,
+		DBQueryRequest = 1017,
+		DBQueryResponse = 1018,
+		DBQueryBatchRequest = 1019,
+		DBQueryBatchResponse = 1020,
+		DBQueryJsonRequest = 1021,
+		DBQueryJsonResponse = 1022,
+		ObjectAddRequest = 1023,
+		ObjectAddResponse = 1024,
+		ObjectRemoveRequest = 1025,
+		ObjectRemoveResponse = 1026,
+		ObjectLockRequest = 1027,
+		ObjectLockResponse = 1028,
+		ObjectUnLockRequest = 1029,
+		ObjectUnLockResponse = 1030,
+		ObjectGetRequest = 1031,
+		ObjectGetResponse = 1032,
+		R2G_GetLoginKey = 1033,
+		G2R_GetLoginKey = 1034,
+		G2M_CreateUnit = 1035,
+		M2G_CreateUnit = 1036,
 	}
 }

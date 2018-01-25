@@ -11,7 +11,7 @@ namespace Hotfix
 			A2M_Reload response = new A2M_Reload();
 			try
 			{
-				ObjectEvents.Instance.Add("Hotfix", DllHelper.GetHotfixAssembly());
+				Game.EventSystem.Add(DLLType.Hotfix, DllHelper.GetHotfixAssembly());
 				reply(response);
 			}
 			catch (Exception e)
@@ -19,7 +19,7 @@ namespace Hotfix
 				response.Error = ErrorCode.ERR_ReloadFail;
 				StartConfig myStartConfig = Game.Scene.GetComponent<StartConfigComponent>().StartConfig;
 				InnerConfig innerConfig = myStartConfig.GetComponent<InnerConfig>();
-				response.Message = $"{innerConfig.Address} reload fail, {e}";
+				response.Message = $"{innerConfig.IPEndPoint} reload fail, {e}";
 				reply(response);
 			}
 		}

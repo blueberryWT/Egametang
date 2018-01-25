@@ -2,8 +2,8 @@
 
 namespace Hotfix
 {
-    [ObjectEvent]
-    public class ServerFrameComponentEvent : ObjectEvent<ServerFrameComponent>, IAwake
+    [ObjectSystem]
+    public class ServerFrameComponentSystem : ObjectSystem<ServerFrameComponent>, IAwake
     {
         public void Awake()
         {
@@ -11,7 +11,7 @@ namespace Hotfix
         }
     }
 	
-    public static class ServerFrameComponentSystem
+    public static class ServerFrameComponentEx
     {
         public static void Awake(this ServerFrameComponent self)
         {

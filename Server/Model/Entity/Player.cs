@@ -1,7 +1,7 @@
 ﻿namespace Model
 {
-	[ObjectEvent]
-	public class GamerEvent : ObjectEvent<Player>, IAwake<string>
+	[ObjectSystem]
+	public class PlayerSystem : ObjectSystem<Player>, IAwake<string>
 	{
 		public void Awake(string account)
 		{

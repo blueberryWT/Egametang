@@ -17,5 +17,12 @@
 
 		SessionRecvMessage,
 		NumbericChange,
+
+		MessageDeserializeFinish,
+		SceneChange,
+		FrameUpdate,
+		
+		LoadingBegin,
+		LoadingFinish,
 	}
 }

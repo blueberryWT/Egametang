@@ -2,8 +2,8 @@
 
 namespace Hotfix
 {
-	[ObjectEvent]
-	public class RealmGateAddressComponentEvent : ObjectEvent<RealmGateAddressComponent>, IStart
+	[ObjectSystem]
+	public class RealmGateAddressComponentSystem : ObjectSystem<RealmGateAddressComponent>, IStart
 	{
 		public void Start()
 		{
@@ -11,11 +11,11 @@ namespace Hotfix
 		}
 	}
 	
-	public static class RealmGateAddressComponentSystem
+	public static class RealmGateAddressComponentEx
 	{
 		public static void Start(this RealmGateAddressComponent component)
 		{
-			StartConfig[] startConfigs = component.GetComponent<StartConfigComponent>().GetAll();
+			StartConfig[] startConfigs = component.Parent.GetComponent<StartConfigComponent>().GetAll();
 			foreach (StartConfig config in startConfigs)
 			{
 				if (!config.AppType.Is(AppType.Gate))

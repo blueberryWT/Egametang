@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Model
@@ -6,7 +7,7 @@ namespace Model
 	public enum NetworkProtocol
 	{
 		TCP,
-		UDP
+		KCP,
 	}
 
 	public abstract class AService: IDisposable
@@ -15,7 +16,7 @@ namespace Model
 
 		public abstract Task<AChannel> AcceptChannel();
 
-		public abstract AChannel ConnectChannel(string host, int port);
+		public abstract AChannel ConnectChannel(IPEndPoint ipEndPoint);
 
 		public abstract void Remove(long channelId);
 

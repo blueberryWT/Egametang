@@ -3,8 +3,8 @@ using System.Linq;
 
 namespace Model
 {
-	[ObjectEvent]
-	public class PlayerComponentEvent : ObjectEvent<PlayerComponent>, IAwake
+	[ObjectSystem]
+	public class PlayerComponentSystem : ObjectSystem<PlayerComponent>, IAwake
 	{
 		public void Awake()
 		{

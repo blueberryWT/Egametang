@@ -12,17 +12,15 @@ namespace Model
 		private TcpListener acceptor;
 
 		private readonly Dictionary<long, TChannel> idChannels = new Dictionary<long, TChannel>();
-
-		private readonly EQueue<Action> actions = new EQueue<Action>();
 		
 		/// <summary>
 		/// 即可做client也可做server
 		/// </summary>
-		/// <param name="host"></param>
-		/// <param name="port"></param>
-		public TService(string host, int port)
+		public TService(IPEndPoint ipEndPoint)
 		{
-			this.acceptor = new TcpListener(new IPEndPoint(IPAddress.Parse(host), port));
+			this.acceptor = new TcpListener(ipEndPoint);
+			this.acceptor.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+			this.acceptor.Server.NoDelay = true;
 			this.acceptor.Start();
 		}
 
@@ -45,12 +43,7 @@ namespace Model
 			this.acceptor.Stop();
 			this.acceptor = null;
 		}
-
-		public void Add(Action action)
-		{
-			this.actions.Enqueue(action);
-		}
-
+		
 		public override AChannel GetChannel(long id)
 		{
 			TChannel channel = null;
@@ -70,10 +63,10 @@ namespace Model
 			return channel;
 		}
 
-		public override AChannel ConnectChannel(string host, int port)
+		public override AChannel ConnectChannel(IPEndPoint ipEndPoint)
 		{
 			TcpClient tcpClient = new TcpClient();
-			TChannel channel = new TChannel(tcpClient, host, port, this);
+			TChannel channel = new TChannel(tcpClient, ipEndPoint, this);
 			this.idChannels[channel.Id] = channel;
 
 			return channel;
@@ -94,14 +87,9 @@ namespace Model
 			this.idChannels.Remove(id);
 			channel.Dispose();
 		}
-		
+
 		public override void Update()
 		{
-			while (this.actions.Count > 0)
-			{
-				Action action = this.actions.Dequeue();
-				action();
-			}
 		}
 	}
 }

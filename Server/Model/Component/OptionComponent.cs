@@ -3,8 +3,8 @@ using CommandLine;
 
 namespace Model
 {
-	[ObjectEvent]
-	public class OptionComponentEvent : ObjectEvent<OptionComponent>, IAwake<string[]>
+	[ObjectSystem]
+	public class OptionComponentSystem : ObjectSystem<OptionComponent>, IAwake<string[]>
 	{
 		public void Awake(string[] args)
 		{

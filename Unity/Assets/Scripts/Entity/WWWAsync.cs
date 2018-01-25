@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace Model
 {
-	[ObjectEvent]
-	public class WWWAsyncEvent : ObjectEvent<WWWAsync>, IUpdate
+	[ObjectSystem]
+	public class WwwAsyncSystem : ObjectSystem<WWWAsync>, IUpdate
 	{
 		public void Update()
 		{
@@ -65,7 +65,9 @@ namespace Model
 				return;
 			}
 
-			this.tcs.SetResult(true);
+			var t = this.tcs;
+			this.tcs = null;
+			t?.SetResult(true);
 		}
 
 		public Task<bool> LoadFromCacheOrDownload(string url, Hash128 hash)
@@ -113,6 +115,7 @@ namespace Model
 
             www?.Dispose();
 			this.www = null;
+			this.tcs = null;
 		}
 	}
 }

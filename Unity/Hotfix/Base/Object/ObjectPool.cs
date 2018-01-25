@@ -6,33 +6,14 @@ namespace Hotfix
 {
     public class ObjectPool
     {
-	    private static ObjectPool instance;
-
-	    public static ObjectPool Instance
-	    {
-		    get
-		    {
-			    return instance ?? new ObjectPool();
-		    }
-	    }
-
-        private readonly Dictionary<Type, EQueue<Disposer>> dictionary = new Dictionary<Type, EQueue<Disposer>>();
-
-        private ObjectPool()
-        {
-        }
-
-	    public static void Close()
-	    {
-		    instance = null;
-	    }
+        private readonly Dictionary<Type, Queue<Disposer>> dictionary = new Dictionary<Type, Queue<Disposer>>();
 
         public Disposer Fetch(Type type)
         {
-	        EQueue<Disposer> queue;
+	        Queue<Disposer> queue;
             if (!this.dictionary.TryGetValue(type, out queue))
             {
-                queue = new EQueue<Disposer>();
+                queue = new Queue<Disposer>();
                 this.dictionary.Add(type, queue);
             }
 	        Disposer obj;
@@ -54,10 +35,10 @@ namespace Hotfix
         public void Recycle(Disposer obj)
         {
             Type type = obj.GetType();
-	        EQueue<Disposer> queue;
+	        Queue<Disposer> queue;
             if (!this.dictionary.TryGetValue(type, out queue))
             {
-                queue = new EQueue<Disposer>();
+                queue = new Queue<Disposer>();
 				this.dictionary.Add(type, queue);
             }
             queue.Enqueue(obj);

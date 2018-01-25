@@ -1,3 +1,5 @@
+# [English](https://github.com/egametang/Egametang/blob/master/README.md) 
+
 __讨论QQ群 : 474643097__
 
 ### 1.可用VS单步调试的分布式服务端，N变1  
@@ -31,10 +33,12 @@ erlang语言一大优势就是位置透明的消息机制，用户完全不用�
 因为ios的限制，之前unity热更新一般使用lua，导致unity3d开发人员要写两种代码，麻烦的要死。之后幸好出了ILRuntime库，利用ILRuntime库，unity3d可以利用C#语言加载热更新dll进行热更新。ILRuntime一个缺陷就是开发时候不支持VS debug，这有点不爽。ET框架使用了一个预编译指令ILRuntime，可以无缝切换。平常开发的时候不使用ILRuntime，而是使用Assembly.Load加载热更新动态库，这样可以方便用VS单步调试。在发布的时候，定义预编译指令ILRuntime就可以无缝切换成使用ILRuntime加载热更新动态库。这样开发起来及其方便，再也不用使用狗屎lua了
 ### 8.客户端服务端用同一种语言，并且共享代码  
 下载ET框架，打开服务端工程，可以看到服务端引用了客户端很多代码，通过引用客户端代码的方式实现了双端共享代码。例如客户端服务端之间的网络消息两边完全共用一个文件即可，添加一个消息只需要修改一遍。  
-### 9.UDP TCP协议无缝切换  
-ET框架不但支持TCP，而且支持可靠的UDP协议，UDP支持是封装了ENet库，ENet也是英雄联盟所使用的网络库，其特点是快速，并且网络丢包的情况下性能也非常好，这个我们做过测试TCP在丢包5%的情况下，moba游戏就卡的不行了，但是使用ENet，丢包20%仍然不会感到卡。非常强大。  
+### 9.KCP ENET TCP协议无缝切换  
+ET框架不但支持TCP，而且支持可靠的UDP协议（ENET跟KCP），ENet是英雄联盟所使用的网络库，其特点是快速，并且网络丢包的情况下性能也非常好，这个我们做过测试TCP在丢包5%的情况下，moba游戏就卡的不行了，但是使用ENet，丢包20%仍然不会感到卡。非常强大。框架还支持使用KCP协议，KCP也是可靠UDP协议，据说比ENET性能更好，使用kcp请注意，需要自己加心跳机制，否则20秒没收到包，服务端将断开连接。三种协议可以无缝切换。  
+### 10.打包工具  
+ET框架带有一整套打包工具，完全傻瓜式。一键打包，自动分析共享资源。对比md5更新  
 
-### 10 还有很多很多功能，我就不详细介绍了  
+### 11.还有很多很多功能，我就不详细介绍了  
 a.及其方便检查CPU占用和内存泄漏检查，vs自带分析工具，不用再为性能和内存泄漏检查而烦恼  
 b.使用NLog库，打log及其方便，平常开发时，可以将所有服务器log打到一个文件中，再也不用一个个文件搜索log了  
 c.统一使用Mongodb的bson做序列化，消息和配置文件全部都是bson或者json，并且以后使用mongodb做数据库，再也不用做格式转换了。  
@@ -52,5 +56,12 @@ ET框架的服务端是一个强大灵活的分布式服务端架构，完全可
 群友源码分析：  
 [框架服务端运行流程](http://www.cnblogs.com/fancybit/p/et1.html)   
 [ET启动配置](http://www.cnblogs.com/fancybit/p/et2.html)   
+[框架demo介绍](http://www.jianshu.com/p/f2ea0d26c7c1)  
+[linux部署](http://gad.qq.com/article/detail/35973)  
 
+群友demo：  
+[斗地主（客户端服务端）](https://github.com/Viagi/LandlordsCore)  
+
+视频教程：  
+[肉饼老师主讲](http://www.taikr.com/my/course/972)   
 __讨论QQ群 : 474643097__

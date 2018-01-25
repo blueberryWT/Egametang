@@ -2,11 +2,15 @@
 
 namespace Model
 {
-	[MessageHandler(Opcode.Actor_CreateUnits)]
+	[MessageHandler((int)Opcode.Actor_CreateUnits)]
 	public class Actor_CreateUnitsHandler : AMHandler<Actor_CreateUnits>
 	{
-		protected override void Run(Actor_CreateUnits message)
+		protected override void Run(Session session, Actor_CreateUnits message)
 		{
+			// 加载Unit资源
+			ResourcesComponent resourcesComponent = Game.Scene.GetComponent<ResourcesComponent>();
+			resourcesComponent.LoadBundle($"Unit.unity3d");
+			
 			UnitComponent unitComponent = Game.Scene.GetComponent<UnitComponent>();
 			
 			foreach (UnitInfo unitInfo in message.Units)

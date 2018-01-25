@@ -1,28 +1,29 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using ProtoBuf;
 
+// 不要在这个文件加[ProtoInclude]跟[BsonKnowType]标签,加到InnerMessage.cs或者OuterMessage.cs里面去
 namespace Model
 {
 	[ProtoContract]
-	[ProtoInclude(20000, typeof(AFrameMessage))]
-	public abstract class AActorMessage : AMessage
-	{
-	}
-
-	public abstract class AActorRequest : ARequest
-	{
-	}
-
-	public abstract class AActorResponse : AResponse
+	[BsonKnownTypes(typeof(AFrameMessage))]
+	public abstract partial class AActorMessage : AMessage
 	{
 	}
 
 	[ProtoContract]
-	[ProtoInclude(30000, typeof(Frame_ClickMap))]
-	[BsonKnownTypes(typeof(Frame_ClickMap))]
-	public abstract class AFrameMessage : AActorMessage
+	public abstract partial class AActorRequest : ARequest
 	{
-		[ProtoMember(1)]
+	}
+
+	[ProtoContract]
+	public abstract partial class AActorResponse : AResponse
+	{
+	}
+
+	[ProtoContract]
+	public abstract partial class AFrameMessage : AActorMessage
+	{
+		[ProtoMember(90)]
 		public long Id;
 	}
 }

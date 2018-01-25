@@ -1,33 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace Model
 {
 	[BsonIgnoreExtraElements]
-	[BsonKnownTypes(typeof(EntityDB))]
-	public class Entity : Disposer, ISupportInitialize
+	public partial class Entity : Component
 	{
-		[BsonIgnore]
-		public Entity Parent { get; set; }
-
 		[BsonElement]
 		[BsonIgnoreIfNull]
 		private HashSet<Component> components;
 
 		[BsonIgnore]
-		private Dictionary<Type, Component> componentDict = new Dictionary<Type, Component>();
+		private Dictionary<Type, Component> componentDict;
 
 		protected Entity()
 		{
 			this.Id = IdGenerater.GenerateId();
+			this.components = new HashSet<Component>();
+			this.componentDict = new Dictionary<Type, Component>();
 		}
 
 		protected Entity(long id)
 		{
 			this.Id = id;
+			this.components = new HashSet<Component>();
+			this.componentDict = new Dictionary<Type, Component>();
 		}
 
 		public override void Dispose()
@@ -50,6 +49,9 @@ namespace Model
 					Log.Error(e.ToString());
 				}
 			}
+
+			this.components.Clear();
+			this.componentDict.Clear();
 		}
 
 		public K AddComponent<K>() where K : Component, new()
@@ -61,12 +63,7 @@ namespace Model
 				throw new Exception($"AddComponent, component already exist, id: {this.Id}, component: {typeof(K).Name}");
 			}
 
-			if (this.components == null)
-			{
-				this.components = new HashSet<Component>();
-			}
-
-			if (component is ComponentDB)
+			if (component is ISerializeToEntity)
 			{
 				this.components.Add(component);
 			}
@@ -82,13 +79,8 @@ namespace Model
 			{
 				throw new Exception($"AddComponent, component already exist, id: {this.Id}, component: {typeof(K).Name}");
 			}
-
-			if (this.components == null)
-			{
-				this.components = new HashSet<Component>();
-			}
-
-			if (component is ComponentDB)
+			
+			if (component is ISerializeToEntity)
 			{
 				this.components.Add(component);
 			}
@@ -104,13 +96,8 @@ namespace Model
 			{
 				throw new Exception($"AddComponent, component already exist, id: {this.Id}, component: {typeof(K).Name}");
 			}
-
-			if (this.components == null)
-			{
-				this.components = new HashSet<Component>();
-			}
-
-			if (component is ComponentDB)
+			
+			if (component is ISerializeToEntity)
 			{
 				this.components.Add(component);
 			}
@@ -127,12 +114,7 @@ namespace Model
 				throw new Exception($"AddComponent, component already exist, id: {this.Id}, component: {typeof(K).Name}");
 			}
 
-			if (this.components == null)
-			{
-				this.components = new HashSet<Component>();
-			}
-
-			if (component is ComponentDB)
+			if (component is ISerializeToEntity)
 			{
 				this.components.Add(component);
 			}
@@ -148,12 +130,9 @@ namespace Model
 				return;
 			}
 
-			this.components?.Remove(component);
+			this.components.Remove(component);
 			this.componentDict.Remove(typeof(K));
-			if (this.components != null && this.components.Count == 0)
-			{
-				this.components = null;
-			}
+
 			component.Dispose();
 		}
 
@@ -167,10 +146,7 @@ namespace Model
 
 			this.components?.Remove(component);
 			this.componentDict.Remove(type);
-			if (this.components != null && this.components.Count == 0)
-			{
-				this.components = null;
-			}
+
 			component.Dispose();
 		}
 
@@ -189,27 +165,30 @@ namespace Model
 			return this.componentDict.Values.ToArray();
 		}
 
-		public virtual void BeginInit()
+		public override void BeginInit()
 		{
 			this.components = new HashSet<Component>();
 			this.componentDict = new Dictionary<Type, Component>();
 		}
 
-		public virtual void EndInit()
+		public override void EndInit()
 		{
-			ObjectEvents.Instance.Add(this);
+			try
+			{
+				this.componentDict.Clear();
 
-			if (this.components != null && this.components.Count == 0)
-			{
-				this.components = null;
-			}
-			if (this.components != null)
-			{
-				foreach (Component component in this.components)
+				if (this.components != null)
 				{
-					component.Entity = this;
-					this.componentDict.Add(component.GetType(), component);
+					foreach (Component component in this.components)
+					{
+						component.Parent = this;
+						this.componentDict.Add(component.GetType(), component);
+					}
 				}
+			}
+			catch (Exception e)
+			{
+				Log.Error(e.ToString());
 			}
 		}
 	}

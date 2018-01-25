@@ -14,9 +14,9 @@ namespace Model
 #if ILRuntime
 		public static void LoadHotfixAssembly()
 		{
-			GameObject code = (GameObject)Resources.Load("Code");
-			byte[] assBytes = code.GetComponent<ReferenceCollector>().Get<TextAsset>("Hotfix.dll").bytes;
-			byte[] mdbBytes = code.GetComponent<ReferenceCollector>().Get<TextAsset>("Hotfix.pdb").bytes;
+			GameObject code = Game.Scene.GetComponent<ResourcesComponent>().GetAsset<GameObject>("code.unity3d", "Code");
+			byte[] assBytes = code.Get<TextAsset>("Hotfix.dll").bytes;
+			byte[] mdbBytes = code.Get<TextAsset>("Hotfix.pdb").bytes;
 
 			using (MemoryStream fs = new MemoryStream(assBytes))
 			using (MemoryStream p = new MemoryStream(mdbBytes))
@@ -27,7 +27,7 @@ namespace Model
 #else
 		public static Assembly LoadHotfixAssembly()
 		{
-			GameObject code = (GameObject)Resources.Load("Code");
+			GameObject code = Game.Scene.GetComponent<ResourcesComponent>().GetAsset<GameObject>("code.unity3d", "Code");
 			byte[] assBytes = code.Get<TextAsset>("Hotfix.dll").bytes;
 			byte[] mdbBytes = code.Get<TextAsset>("Hotfix.mdb").bytes;
 			Assembly assembly = Assembly.Load(assBytes, mdbBytes);
@@ -46,14 +46,18 @@ namespace Model
 
 			return appDomain.LoadedTypes.Values.Select(x => x.ReflectionType).ToArray();
 #else
-			return ObjectEvents.Instance.HotfixAssembly.GetTypes();
+			if (Game.EventSystem.HotfixAssembly == null)
+			{
+				return new Type[0];
+			}
+			return Game.EventSystem.HotfixAssembly.GetTypes();
 #endif
 		}
 
 		public static Type[] GetMonoTypes()
 		{
 			List<Type> types = new List<Type>();
-			foreach (Assembly assembly in ObjectEvents.Instance.GetAll())
+			foreach (Assembly assembly in Game.EventSystem.GetAll())
 			{
 				types.AddRange(assembly.GetTypes());
 			}

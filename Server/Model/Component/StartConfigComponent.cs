@@ -5,8 +5,8 @@ using System.Linq;
 
 namespace Model
 {
-	[ObjectEvent]
-	public class StartConfigComponentEvent : ObjectEvent<StartConfigComponent>, IAwake<string, int>
+	[ObjectSystem]
+	public class StartConfigComponentSystem : ObjectSystem<StartConfigComponent>, IAwake<string, int>
 	{
 		public void Awake(string a, int b)
 		{
@@ -74,9 +74,9 @@ namespace Model
 						this.GateConfigs.Add(startConfig);
 					}
 				}
-				catch (Exception)
+				catch (Exception e)
 				{
-					Log.Error($"config错误: {s2}");
+					Log.Error($"config错误: {s2} {e}");
 				}
 			}
 

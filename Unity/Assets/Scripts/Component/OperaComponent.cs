@@ -2,8 +2,8 @@
 
 namespace Model
 {
-    [ObjectEvent]
-    public class OperaComponentEvent : ObjectEvent<OperaComponent>, IUpdate, IAwake
+    [ObjectSystem]
+    public class OperaComponentSystem : ObjectSystem<OperaComponent>, IUpdate, IAwake
     {
         public void Update()
         {

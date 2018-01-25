@@ -3,8 +3,8 @@ using System.Linq;
 
 namespace Model
 {
-	[ObjectEvent]
-	public class UnitComponentEvent : ObjectEvent<UnitComponent>, IAwake
+	[ObjectSystem]
+	public class UnitComponentSystem : ObjectSystem<UnitComponent>, IAwake
 	{
 		public void Awake()
 		{
@@ -23,6 +23,24 @@ namespace Model
 		public void Awake()
 		{
 			Instance = this;
+		}
+
+		public override void Dispose()
+		{
+			if (this.Id == 0)
+			{
+				return;
+			}
+			base.Dispose();
+
+			foreach (Unit unit in this.idUnits.Values)
+			{
+				unit.Dispose();
+			}
+
+			this.idUnits.Clear();
+
+			Instance = null;
 		}
 
 		public void Add(Unit unit)
@@ -61,22 +79,6 @@ namespace Model
 		public Unit[] GetAll()
 		{
 			return this.idUnits.Values.ToArray();
-		}
-
-		public override void Dispose()
-		{
-			if (this.Id == 0)
-			{
-				return;
-			}
-			base.Dispose();
-
-			foreach (Unit unit in this.idUnits.Values)
-			{
-				unit.Dispose();
-			}
-
-			Instance = null;
 		}
 	}
 }

@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Model
 {
-	[ObjectEvent]
-	public class AnimatorComponentEvent : ObjectEvent<AnimatorComponent>, IAwake, IUpdate
+	[ObjectSystem]
+	public class AnimatorComponentSystem : ObjectSystem<AnimatorComponent>, IAwake, IUpdate
 	{
 		public void Awake()
 		{
@@ -31,7 +31,7 @@ namespace Model
 
 		public void Awake()
 		{
-			Animator animator = this.GetEntity<Unit>().GameObject.GetComponent<Animator>();
+			Animator animator = this.GetParent<Unit>().GameObject.GetComponent<Animator>();
 
 			if (animator == null)
 			{

@@ -1,7 +1,15 @@
-﻿namespace Model
+﻿using System.Collections.Generic;
+
+namespace Model
 {
-    [ObjectEvent]
-    public class ClientFrameComponentEvent : ObjectEvent<ClientFrameComponent>, IStart
+    public struct SessionFrameMessage
+    {
+        public Session Session;
+        public FrameMessage FrameMessage;
+    }
+    
+    [ObjectSystem]
+    public class ClientFrameComponentSystem : ObjectSystem<ClientFrameComponent>, IStart
     {
         public void Start()
         {
@@ -13,7 +21,7 @@
     {
         public int Frame;
 
-        public EQueue<FrameMessage> Queue = new EQueue<FrameMessage>();
+        public Queue<SessionFrameMessage> Queue = new Queue<SessionFrameMessage>();
 
         public int count = 1;
         
@@ -26,9 +34,9 @@
             UpdateAsync();
         }
 
-        public void Add(FrameMessage frameMessage)
+        public void Add(Session session, FrameMessage frameMessage)
         {
-            this.Queue.Enqueue(frameMessage);
+            this.Queue.Enqueue(new SessionFrameMessage() {Session = session, FrameMessage = frameMessage});
         }
 
         public async void UpdateAsync()
@@ -65,14 +73,14 @@
             {
                 return;
             }
-            FrameMessage frameMessage = this.Queue.Dequeue();
-            this.Frame = frameMessage.Frame;
+            SessionFrameMessage sessionFrameMessage = this.Queue.Dequeue();
+            this.Frame = sessionFrameMessage.FrameMessage.Frame;
 
-            for (int i = 0; i < frameMessage.Messages.Count; ++i)
+            for (int i = 0; i < sessionFrameMessage.FrameMessage.Messages.Count; ++i)
             {
-	            AFrameMessage message = frameMessage.Messages[i];
-	            ushort opcode = Game.Scene.GetComponent<OpcodeTypeComponent>().GetOpcode(message.GetType());
-                Game.Scene.GetComponent<MessageDispatherComponent>().Handle(new MessageInfo() { Opcode= opcode, Message = message });
+	            AFrameMessage message = sessionFrameMessage.FrameMessage.Messages[i];
+                Opcode opcode = Game.Scene.GetComponent<OpcodeTypeComponent>().GetOpcode(message.GetType());
+                Game.Scene.GetComponent<MessageDispatherComponent>().Handle(sessionFrameMessage.Session, new MessageInfo() { Opcode= opcode, Message = message });
             }
         }
     }

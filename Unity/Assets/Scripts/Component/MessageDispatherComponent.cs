@@ -1,10 +1,60 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
+using ILRuntime.CLR.Method;
+using ILRuntime.Runtime.Intepreter;
 
 namespace Model
 {
-	[ObjectEvent]
-	public class MessageDispatherComponentEvent : ObjectEvent<MessageDispatherComponent>, IAwake, ILoad
+	/// <summary>
+	/// 用来抹平ILRuntime跟mono层差异
+	/// </summary>
+	public interface IMessageMethod
+	{
+		void Run(Session session, AMessage a);
+	}
+
+	public class IMessageMonoMethod : IMessageMethod
+	{
+		private readonly IMHandler iMHandler;
+
+		public IMessageMonoMethod(IMHandler iMHandler)
+		{
+			this.iMHandler = iMHandler;
+		}
+
+		public void Run(Session session, AMessage a)
+		{
+			this.iMHandler.Handle(session, a);
+		}
+	}
+
+	public class IMessageILMethod : IMessageMethod
+	{
+		private readonly ILRuntime.Runtime.Enviorment.AppDomain appDomain;
+		private readonly ILTypeInstance instance;
+		private readonly IMethod method;
+		private readonly object[] param;
+
+		public IMessageILMethod(Type type, string methodName)
+		{
+			appDomain = Init.Instance.AppDomain;
+			this.instance = this.appDomain.Instantiate(type.FullName);
+			this.method = this.instance.Type.GetMethod(methodName, 2);
+			int n = this.method.ParameterCount;
+			this.param = new object[n];
+		}
+
+		public void Run(Session session, AMessage a)
+		{
+			this.param[0] = a;
+			this.appDomain.Invoke(this.method, this.instance, param);
+		}
+	}
+
+
+	[ObjectSystem]
+	public class MessageDispatherComponentSystem : ObjectSystem<MessageDispatherComponent>, IAwake, ILoad
 	{
 		public void Awake()
 		{
@@ -22,7 +72,8 @@ namespace Model
 	/// </summary>
 	public class MessageDispatherComponent : Component
 	{
-		private Dictionary<ushort, List<IMHandler>> handlers;
+		private Dictionary<Opcode, List<IMessageMethod>> handlers;
+
 
 		public void Awake()
 		{
@@ -31,7 +82,7 @@ namespace Model
 
 		public void Load()
 		{
-			handlers = new Dictionary<ushort, List<IMHandler>>();
+			handlers = new Dictionary<Opcode, List<IMessageMethod>>();
 
 			Type[] types = DllHelper.GetMonoTypes();
 
@@ -44,28 +95,51 @@ namespace Model
 				}
 				MessageHandlerAttribute messageHandlerAttribute = (MessageHandlerAttribute)attrs[0];
 				IMHandler iMHandler = (IMHandler)Activator.CreateInstance(type);
-				if (!this.handlers.ContainsKey(messageHandlerAttribute.Opcode))
+				if (!this.handlers.ContainsKey((Opcode)messageHandlerAttribute.Opcode))
 				{
-					this.handlers.Add(messageHandlerAttribute.Opcode, new List<IMHandler>());
+					this.handlers.Add((Opcode)messageHandlerAttribute.Opcode, new List<IMessageMethod>());
 				}
-				this.handlers[messageHandlerAttribute.Opcode].Add(iMHandler);
+				this.handlers[(Opcode)messageHandlerAttribute.Opcode].Add(new IMessageMonoMethod(iMHandler));
+			}
+
+			// hotfix dll
+			Type[] hotfixTypes = DllHelper.GetHotfixTypes();
+			foreach (Type type in hotfixTypes)
+			{
+				object[] attrs = type.GetCustomAttributes(typeof(MessageHandlerAttribute), false);
+				if (attrs.Length == 0)
+				{
+					continue;
+				}
+				MessageHandlerAttribute messageHandlerAttribute = (MessageHandlerAttribute)attrs[0];
+#if ILRuntime
+				IMessageMethod iMessageMethod = new IMessageILMethod(type, "Handle");
+#else
+				IMHandler iMHandler = (IMHandler)Activator.CreateInstance(type);
+				IMessageMethod iMessageMethod = new IMessageMonoMethod(iMHandler);
+#endif
+				if (!this.handlers.ContainsKey((Opcode)messageHandlerAttribute.Opcode))
+				{
+					this.handlers.Add((Opcode)messageHandlerAttribute.Opcode, new List<IMessageMethod>());
+				}
+				this.handlers[(Opcode)messageHandlerAttribute.Opcode].Add(iMessageMethod);
 			}
 		}
 
-		public void Handle(MessageInfo messageInfo)
+		public void Handle(Session session, MessageInfo messageInfo)
 		{
-			List<IMHandler> actions;
+			List<IMessageMethod> actions;
 			if (!this.handlers.TryGetValue(messageInfo.Opcode, out actions))
 			{
 				Log.Error($"消息 {messageInfo.Opcode} 没有处理");
 				return;
 			}
 
-			foreach (IMHandler ev in actions)
+			foreach (IMessageMethod ev in actions)
 			{
 				try
 				{
-					ev.Handle(messageInfo.Message);
+					ev.Run(session, messageInfo.Message);
 				}
 				catch (Exception e)
 				{
@@ -76,7 +150,7 @@ namespace Model
 
 		public override void Dispose()
 		{
-			if (this.Id == 0)
+			if (Id == 0)
 			{
 				return;
 			}

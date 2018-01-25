@@ -6,8 +6,8 @@ using UnityEngine;
 
 namespace Hotfix
 {
-	[ObjectEvent]
-	public class UIComponentEvent : ObjectEvent<UIComponent>, IAwake, ILoad
+	[ObjectSystem]
+	public class UiComponentSystem : ObjectSystem<UIComponent>, IAwake, ILoad
 	{
 		public void Awake()
 		{
@@ -26,7 +26,7 @@ namespace Hotfix
 	public class UIComponent: Component
 	{
 		private GameObject Root;
-		private Dictionary<UIType, IUIFactory> UiTypes;
+		private readonly Dictionary<UIType, IUIFactory> UiTypes = new Dictionary<UIType, IUIFactory>();
 		private readonly Dictionary<UIType, UI> uis = new Dictionary<UIType, UI>();
 
 		public override void Dispose()
@@ -48,6 +48,9 @@ namespace Hotfix
 				uis.Remove(type);
 				ui.Dispose();
 			}
+
+			this.UiTypes.Clear();
+			this.uis.Clear();
 		}
 
 		public void Awake()
@@ -58,7 +61,7 @@ namespace Hotfix
 
 		public void Load()
 		{
-            UiTypes = new Dictionary<UIType, IUIFactory>();
+			UiTypes.Clear();
             
             Type[] types = DllHelper.GetHotfixTypes();
 
@@ -91,7 +94,7 @@ namespace Hotfix
 		{
 			try
 			{
-				UI ui = UiTypes[type].Create(this.GetEntity<Scene>(), type, Root);
+				UI ui = UiTypes[type].Create(this.GetParent<Scene>(), type, Root);
                 uis.Add(type, ui);
 
 				// 设置canvas
@@ -117,6 +120,7 @@ namespace Hotfix
 			{
 				return;
 			}
+            UiTypes[type].Remove(type);
             uis.Remove(type);
 			ui.Dispose();
 		}

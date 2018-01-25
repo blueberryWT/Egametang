@@ -2,25 +2,32 @@
 using System.Collections.Generic;
 using System.Linq;
 using Model;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace Hotfix
 {
-	public class Entity : Disposer
+	[BsonIgnoreExtraElements]
+	public class Entity : Component
 	{
-		public Entity Parent { get; set; }
-		
-		private HashSet<Component> components = new HashSet<Component>();
-		
-		private Dictionary<Type, Component> componentDict = new Dictionary<Type, Component>();
+		[BsonElement]
+		[BsonIgnoreIfNull]
+		private readonly HashSet<Component> components;
+
+		[BsonIgnore]
+		private readonly Dictionary<Type, Component> componentDict;
 
 		protected Entity()
 		{
 			this.Id = IdGenerater.GenerateId();
+			this.components = new HashSet<Component>();
+			this.componentDict = new Dictionary<Type, Component>();
 		}
 
 		protected Entity(long id)
 		{
 			this.Id = id;
+			this.components = new HashSet<Component>();
+			this.componentDict = new Dictionary<Type, Component>();
 		}
 
 		public override void Dispose()
@@ -43,6 +50,9 @@ namespace Hotfix
 					Log.Error(e.ToString());
 				}
 			}
+
+			this.components.Clear();
+			this.componentDict.Clear();
 		}
 
 		public K AddComponent<K>() where K : Component, new()
@@ -54,12 +64,7 @@ namespace Hotfix
 				throw new Exception($"AddComponent, component already exist, id: {this.Id}, component: {typeof(K).Name}");
 			}
 
-			if (this.components == null)
-			{
-				this.components = new HashSet<Component>();
-			}
-
-			if (component is ComponentDB)
+			if (component is ISerializeToEntity)
 			{
 				this.components.Add(component);
 			}
@@ -76,12 +81,7 @@ namespace Hotfix
 				throw new Exception($"AddComponent, component already exist, id: {this.Id}, component: {typeof(K).Name}");
 			}
 
-			if (this.components == null)
-			{
-				this.components = new HashSet<Component>();
-			}
-
-			if (component is ComponentDB)
+			if (component is ISerializeToEntity)
 			{
 				this.components.Add(component);
 			}
@@ -98,12 +98,7 @@ namespace Hotfix
 				throw new Exception($"AddComponent, component already exist, id: {this.Id}, component: {typeof(K).Name}");
 			}
 
-			if (this.components == null)
-			{
-				this.components = new HashSet<Component>();
-			}
-
-			if (component is ComponentDB)
+			if (component is ISerializeToEntity)
 			{
 				this.components.Add(component);
 			}
@@ -120,12 +115,7 @@ namespace Hotfix
 				throw new Exception($"AddComponent, component already exist, id: {this.Id}, component: {typeof(K).Name}");
 			}
 
-			if (this.components == null)
-			{
-				this.components = new HashSet<Component>();
-			}
-
-			if (component is ComponentDB)
+			if (component is ISerializeToEntity)
 			{
 				this.components.Add(component);
 			}
@@ -141,12 +131,9 @@ namespace Hotfix
 				return;
 			}
 
-			this.components?.Remove(component);
+			this.components.Remove(component);
 			this.componentDict.Remove(typeof(K));
-			if (this.components != null && this.components.Count == 0)
-			{
-				this.components = null;
-			}
+
 			component.Dispose();
 		}
 
@@ -160,10 +147,7 @@ namespace Hotfix
 
 			this.components?.Remove(component);
 			this.componentDict.Remove(type);
-			if (this.components != null && this.components.Count == 0)
-			{
-				this.components = null;
-			}
+
 			component.Dispose();
 		}
 

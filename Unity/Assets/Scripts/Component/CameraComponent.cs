@@ -2,8 +2,8 @@
 
 namespace Model
 {
-	[ObjectEvent]
-	public class CameraComponentEvent : ObjectEvent<CameraComponent>, IAwake, ILateUpdate
+	[ObjectSystem]
+	public class CameraComponentSystem : ObjectSystem<CameraComponent>, IAwake, ILateUpdate
 	{
 		public void Awake()
 		{

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Model
@@ -8,6 +9,8 @@ namespace Model
 	public abstract class NetworkComponent : Component
 	{
 		private AService Service;
+
+		public AppType AppType;
 
 		private readonly Dictionary<long, Session> sessions = new Dictionary<long, Session>();
 
@@ -22,25 +25,25 @@ namespace Model
 				case NetworkProtocol.TCP:
 					this.Service = new TService();
 					break;
-				case NetworkProtocol.UDP:
-					this.Service = new UService();
+				case NetworkProtocol.KCP:
+					this.Service = new KService();
 					break;
 				default:
 					throw new ArgumentOutOfRangeException();
 			}
 		}
 
-		public void Awake(NetworkProtocol protocol, string host, int port)
+		public void Awake(NetworkProtocol protocol, IPEndPoint ipEndPoint)
 		{
 			try
 			{
 				switch (protocol)
 				{
 					case NetworkProtocol.TCP:
-						this.Service = new TService(host, port);
+						this.Service = new TService(ipEndPoint);
 						break;
-					case NetworkProtocol.UDP:
-						this.Service = new UService(host, port);
+					case NetworkProtocol.KCP:
+						this.Service = new KService(ipEndPoint);
 						break;
 					default:
 						throw new ArgumentOutOfRangeException();
@@ -50,7 +53,7 @@ namespace Model
 			}
 			catch (Exception e)
 			{
-				throw new Exception($"{host} {port}", e);
+				throw new Exception($"{ipEndPoint}", e);
 			}
 		}
 
@@ -70,7 +73,7 @@ namespace Model
 		public virtual async Task<Session> Accept()
 		{
 			AChannel channel = await this.Service.AcceptChannel();
-			Session session = new Session(this, channel);
+			Session session = EntityFactory.Create<Session, NetworkComponent, AChannel>(this, channel);
 			channel.ErrorCallback += (c, e) => { this.Remove(session.Id); };
 			this.sessions.Add(session.Id, session);
 			return session;
@@ -97,15 +100,12 @@ namespace Model
 		/// <summary>
 		/// 创建一个新Session
 		/// </summary>
-		public virtual Session Create(string address)
+		public virtual Session Create(IPEndPoint ipEndPoint)
 		{
 			try
 			{
-				string[] ss = address.Split(':');
-				int port = int.Parse(ss[1]);
-				string host = ss[0];
-				AChannel channel = this.Service.ConnectChannel(host, port);
-				Session session = new Session(this, channel);
+				AChannel channel = this.Service.ConnectChannel(ipEndPoint);
+				Session session = EntityFactory.Create<Session, NetworkComponent, AChannel>(this, channel);
 				channel.ErrorCallback += (c, e) => { this.Remove(session.Id); };
 				this.sessions.Add(session.Id, session);
 				return session;
